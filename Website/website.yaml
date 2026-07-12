@@ -1,0 +1,46 @@
+# 1. Define the Custom Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: inspiration-hub
+
+---
+# 2. Define the Website Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-server-deployment
+  namespace: inspiration-hub # Deploys inside the custom namespace
+  labels:
+    app: my-website
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-website
+  template:
+    metadata:
+      labels:
+        app: my-website
+    spec:
+      containers:
+      - name: nginx-web
+        image: inspirationHub/hub:0.0.1 # You can replace this with your own custom image
+        ports:
+        - containerPort: 80
+
+---
+# 3. Expose the Website to Localhost
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-server-service
+  namespace: inspiration-hub # Must match the deployment namespace
+spec:
+  type: LoadBalancer # Docker Desktop routes this directly to localhost
+  selector:
+    app: my-website
+  ports:
+    - protocol: TCP
+      port: 8080          # External port accessed on your machine
+      targetPort: 80    # Internal port the container listens on
