@@ -1,0 +1,79 @@
+# 1. Define the Custom Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: inspiration-hub
+
+---
+# 2. Define the Website Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inspiration-hub
+  namespace: inspiration-hub
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: inspiration-hub
+  template:
+    metadata:
+      labels:
+        app: inspiration-hub
+    spec:
+      containers:
+      - name: inspiration-hub
+        image: wchen2654/inspiration_hub:0.0.1
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: inspiration-hub-service
+  namespace: inspiration-hub
+spec:
+  selector:
+    app: inspiration-hub
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: inspiration-hub-ingress
+  namespace: inspiration-hub
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: inspirationhub.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: inspiration-hub-service
+            port:
+              number: 8080
